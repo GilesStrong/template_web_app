@@ -1,0 +1,31 @@
+{
+  "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
+  // Make Ruff the Python formatter (scoped to Python only)
+  "[python]": {
+    "editor.defaultFormatter": "charliermarsh.ruff",
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.fixAll.ruff": "explicit",
+      "source.organizeImports": "explicit"
+    }
+  },
+  // Turn on Ruff features
+  "ruff.lint.enable": true,
+  "ruff.format.enable": true,
+  "ruff.organizeImports": true,
+  // Point the extension at project Ruff (recommended)
+  "ruff.path": [
+    ".venv/bin/ruff"
+  ],
+  "ruff.lint.args": [
+    "--unfixable",
+    "F401,F841",
+  ],
+  // Give code actions enough time
+  "editor.codeActionsOnSaveTimeout": 3000,
+  "chat.tools.terminal.autoApprove": {
+    "bun": true,
+    "/workspace/myapp/.venv/bin/python": true,
+    "bunx": true
+  }
+}

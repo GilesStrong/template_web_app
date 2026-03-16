@@ -1,0 +1,86 @@
+name: CI
+
+permissions:
+  contents: read
+  security-events: write
+  id-token: write
+  actions: read
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  backend-security:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install uv
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install uv
+          uv --version
+
+      - name: Sync dependencies
+        run: uv sync --frozen
+
+      - name: Install Grype
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b /usr/local/bin
+          grype version
+
+      - name: Grype scan (print table + save SARIF)
+        run: |
+          set -euo pipefail
+
+          # Human-readable output for the Actions log
+          grype dir:. \
+            --only-fixed=false \
+            --fail-on high \
+            -o table
+
+          # SARIF for artifacts
+          grype dir:. \
+            --only-fixed=false \
+            --fail-on high \
+            -o sarif > grype-backend.sarif
+
+      # Re-enable SARIF upload once public
+      # - name: Upload Grype SARIF
+      #   if: always() && hashFiles('grype-backend.sarif') != ''
+      #   uses: github/codeql-action/upload-sarif@v4
+      #   with:
+      #     sarif_file: grype-backend.sarif
+
+      - name: Generate backend SBOM (SPDX)
+        uses: anchore/sbom-action@v0
+        with:
+          path: .
+          format: spdx-json
+          output-file: backend-sbom.spdx.json
+
+      - name: Install cosign
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: sigstore/cosign-installer@v3
+
+      - name: Sign backend SBOM (keyless)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          cosign sign-blob --yes \
+            --output-signature backend-sbom.sig \
+            --output-certificate backend-sbom.pem \
+            backend-sbom.spdx.json
+
+      - name: Upload backend SBOM artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-sbom
+          path: |
+            backend-sbom.spdx.json
+            backend-sbom.sig
+            backend-sbom.pem

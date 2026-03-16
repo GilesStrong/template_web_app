@@ -1,0 +1,46 @@
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.14.14
+    hooks:
+      - id: ruff
+        args: [--fix]
+        exclude: '(^dev/)|(\.ipynb$)'
+      - id: ruff-format
+        exclude: '(^dev/)|(\.ipynb$)'
+
+  - repo: local
+    hooks:
+      - id: mypy
+        name: mypy
+        entry: uv run -- mypy
+        args: ["."]
+        language: system
+        types: [python]
+        pass_filenames: false
+        require_serial: true
+        verbose: true
+
+  # Keep uv.lock up to date
+  - repo: https://github.com/astral-sh/uv-pre-commit
+    rev: 0.8.22   # pin to your uv version
+    hooks:
+      - id: uv-lock
+
+  # Fail if uv.lock would change
+  - repo: https://github.com/astral-sh/uv-pre-commit
+    rev: 0.8.22
+    hooks:
+      - id: uv-lock
+        args: ["--check"]  # or "--locked"
+
+  # Export requirements
+  - repo: https://github.com/astral-sh/uv-pre-commit
+    rev: 0.8.22
+    hooks:
+      - id: uv-export
+        args:
+          - "--format=requirements.txt"
+          - "--all-groups"           # or: "--group=dev"
+          - "--no-hashes"
+          - "--output-file=requirements.txt"
+          - "--frozen"               # don’t re-lock during export

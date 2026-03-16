@@ -1,0 +1,222 @@
+services:
+  db:
+    image: postgres:16
+    restart: always
+    env_file: .env.prod
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - myapp_postgres_data_prod:/var/lib/postgresql/data
+    networks:
+      - myapp_network_prod
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  redis:
+    image: redis:7
+    restart: always
+    networks:
+      - myapp_network_prod
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  qdrant:
+    image: qdrant/qdrant:v1.17
+    restart: always
+    volumes:
+      - myapp_qdrant_data_prod:/qdrant/storage
+    networks: 
+      - myapp_network_prod
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: myapp-app:prod
+    env_file: .env.prod
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import http.client, sys; conn = http.client.HTTPConnection('127.0.0.1', 8000, timeout=2); conn.request('GET', '/healthz'); response = conn.getresponse(); sys.exit(0 if response.status in (200, 301, 302, 307, 308) else 1)\""]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+      start_period: 60s
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: >
+      sh -lc "cd /app/app &&
+          python manage.py migrate --noinput &&
+          python manage.py collectstatic --noinput &&
+          exec hypercorn app.asgi:application -b 0.0.0.0:8000 -w 2 --keep-alive 15"
+    networks:
+      - myapp_network_prod
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=128m
+    volumes:
+      - myapp_django_static_prod:/app/staticfiles
+      - myapp_django_media_prod:/app/media
+
+  celery_worker:
+    image: myapp-app:prod
+    env_file: .env.prod
+    command: "sh -lc 'cd /app/app && celery -A app worker -Q default --loglevel=info --concurrency=8 -n worker_default@%h'"
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - myapp_network_prod
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=128m
+
+  celery_llm_worker:
+    image: myapp-app:prod
+    env_file: .env.prod
+    command: "sh -lc 'cd /app/app && celery -A app worker -Q llm --loglevel=info --concurrency=1 --pool=prefork --max-tasks-per-child=50 -n worker_llm@%h'"
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - myapp_network_prod
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=128m
+
+  celery_beat:
+    image: myapp-app:prod
+    env_file: .env.prod
+    command: "sh -lc 'cd /app/app && celery -A app beat --loglevel=info --schedule /tmp/celerybeat-schedule'"
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - myapp_network_prod
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=128m
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.prod
+    image: myapp-frontend:prod
+    env_file: ./frontend/.env.prod
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"fetch('http://localhost:3001/healthz').then((res) => process.exit(res.ok ? 0 : 1)).catch(() => process.exit(1))\""]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+      start_period: 20s
+    networks:
+      - myapp_network_prod
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m
+    expose:
+      - "3001"
+
+  proxy:
+    build:
+      context: .
+      dockerfile: Dockerfile.caddy
+    image: myapp-caddy:prod
+    restart: unless-stopped
+    ports:
+      - "${PORT}:3000"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - myapp_caddy_data_prod:/data
+      - myapp_caddy_config_prod:/config
+      - myapp_django_static_prod:/srv/static:ro
+      - myapp_django_media_prod:/srv/media:ro
+    env_file: ./frontend/.env.prod
+    environment:
+      - BACKEND_UPSTREAM=web:8000
+      - FRONTEND_UPSTREAM=frontend:3001
+      - PUBLIC_URL=${PUBLIC_URL}
+      - ADMIN_ALLOWLIST_CIDRS=${ADMIN_ALLOWLIST_CIDRS:-127.0.0.1/32}
+    depends_on:
+      frontend:
+        condition: service_healthy
+      web:
+        condition: service_healthy
+    networks:
+      - myapp_network_prod
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=32m
+
+  cloudflared:
+    image: cloudflare/cloudflared:2026.2.0
+    restart: unless-stopped
+    command: tunnel --config /etc/cloudflared/config.yml run
+    volumes:
+      - ./.cloudflared:/etc/cloudflared:ro
+    networks:
+      - myapp_network_prod
+    depends_on:
+      - proxy
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=32m
+
+volumes:
+  myapp_postgres_data_prod:
+  myapp_qdrant_data_prod:
+  myapp_django_static_prod:
+  myapp_django_media_prod:
+  myapp_caddy_data_prod:
+  myapp_caddy_config_prod:
+
+networks:
+  myapp_network_prod:

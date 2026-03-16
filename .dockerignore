@@ -1,0 +1,49 @@
+# Python virtual environments
+.venv/
+venv/
+env/
+dev/
+frontend*/
+
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Development files
+.git/
+.gitignore
+.env
+.env.*
+*.log
+
+# IDE specific files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Docker files
+Dockerfile
+docker-compose*.yml
+
+# Testing
+.coverage
+htmlcov/
+.pytest_cache/
+
+# Documentation
+docs/
+*.md
+
+# Miscellaneous
+*.sqlite3
+node_modules
+dist
+build
+media
+staticfiles
+./cloudflared
+cloudflared
+*.pem
+*.key

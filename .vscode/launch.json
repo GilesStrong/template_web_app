@@ -1,0 +1,91 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "web",
+            "type": "debugpy",
+            "request": "launch",
+            "cwd": "${workspaceFolder}/app",
+            "module": "hypercorn",
+            "args": [
+                "app.asgi:application",
+                "--bind",
+                "0.0.0.0:8000"
+            ],
+            "justMyCode": true,
+            "envFile": "${workspaceFolder}/.env",
+            "django": true,
+        },
+        {
+            "name": "celery beat",
+            "type": "debugpy",
+            "request": "launch",
+            "cwd": "${workspaceFolder}/app",
+            "module": "celery",
+            "args": [
+                "-A",
+                "app",
+                "beat",
+                "--loglevel=info"
+            ],
+            "justMyCode": true,
+            "envFile": "${workspaceFolder}/.env",
+            "django": true,
+        },
+        {
+            "name": "celery worker",
+            "type": "debugpy",
+            "request": "launch",
+            "cwd": "${workspaceFolder}/app",
+            "module": "celery",
+            "args": [
+                "-A",
+                "app",
+                "worker",
+                "-Q",
+                "default",
+                "--concurrency=8",
+                "-n",
+                "worker_default@%h",
+                "--loglevel=info"
+            ],
+            "justMyCode": true,
+            "envFile": "${workspaceFolder}/.env",
+            "django": true,
+        },
+        {
+            "name": "celery_llm worker",
+            "type": "debugpy",
+            "request": "launch",
+            "cwd": "${workspaceFolder}/app",
+            "module": "celery",
+            "args": [
+                "-A",
+                "app",
+                "worker",
+                "-Q",
+                "llm",
+                "--concurrency=1",
+                "--pool=prefork",
+                "--max-tasks-per-child=50",
+                "-n",
+                "worker_llm@%h",
+                "--loglevel=info"
+            ],
+            "justMyCode": true,
+            "envFile": "${workspaceFolder}/.env",
+            "django": true,
+        }
+    ],
+    "compounds": [
+        {
+            "name": "Run all",
+            "configurations": [
+                "web",
+                "celery beat",
+                "celery worker",
+                "celery_llm worker"
+            ]
+        }
+    ]
+}

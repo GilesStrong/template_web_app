@@ -1,0 +1,62 @@
+{
+  "name": "django (uv)",
+  "dockerComposeFile": [
+    "../docker-compose.yml",
+    "../docker-compose.override.yml",
+    "docker-compose.devcontainer.yml"
+  ],
+  "service": "web",
+  "workspaceFolder": "/workspace/${localWorkspaceFolderBasename}",
+  "runServices": [
+    "db",
+    "redis",
+    "web",
+    "qdrant",
+    "proxy",
+    "frontend"
+  ],
+  "forwardPorts": [
+    3000,
+    8001
+  ],
+  "portsAttributes": {
+    "3000": {
+      "label": "Frontend UI (Caddy proxy)"
+    },
+    "8001": {
+      "label": "Django (direct)"
+    }
+  },
+  "features": {
+    "ghcr.io/va-h/devcontainers-features/uv": {
+      "shellautocompletion": true
+    },
+    "ghcr.io/meaningful-ooo/devcontainer-features/fish:2.0.0": {
+      "fisher": true
+    }
+  },
+  "shutdownAction": "stopCompose",
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "python.defaultInterpreterPath": "/workspace/.venv/bin/python",
+        "python.testing.pytestEnabled": true,
+        "python.testing.pytestArgs": [
+          "-q"
+        ],
+        "editor.formatOnSave": true,
+        "ruff.enable": true,
+        "ruff.format.enable": true
+      },
+      "extensions": [
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "charliermarsh.ruff",
+        "ms-azuretools.vscode-docker"
+      ]
+    }
+  },
+  "remoteUser": "dev",
+  "containerUser": "dev",
+  "postCreateCommand": "chmod +x .devcontainer/post-create.sh && .devcontainer/post-create.sh"
+}

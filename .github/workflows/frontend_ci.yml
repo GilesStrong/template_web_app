@@ -1,0 +1,102 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    paths:
+      - ".github/workflows/frontend_ci.yml"
+      - "frontend/**"
+
+jobs:
+  frontend-lint:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+
+      - name: Cache Bun + node_modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.bun/install/cache
+            frontend/node_modules
+          key: bun-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('frontend/bun.lockb') }}
+          restore-keys: |
+            bun-${{ runner.os }}-${{ runner.arch }}-
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: bun install --frozen-lockfile
+
+      - name: Run frontend lint
+        working-directory: frontend
+        run: bun run lint
+
+  frontend-tests:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+
+      - name: Cache Bun + node_modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.bun/install/cache
+            frontend/node_modules
+          key: bun-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('frontend/bun.lockb') }}
+          restore-keys: |
+            bun-${{ runner.os }}-${{ runner.arch }}-
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: bun install --frozen-lockfile
+
+      - name: Run frontend tests
+        working-directory: frontend
+        run: bun run test --run
+
+  frontend-e2e:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+
+      - name: Cache Bun + node_modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.bun/install/cache
+            frontend/node_modules
+          key: bun-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('frontend/bun.lockb') }}
+          restore-keys: |
+            bun-${{ runner.os }}-${{ runner.arch }}-
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: bun install --frozen-lockfile
+
+      - name: Install Playwright browsers
+        working-directory: frontend
+        run: bunx playwright install --with-deps chromium
+
+      - name: Run frontend e2e tests
+        working-directory: frontend
+        env:
+          E2E_BASE_URL: http://localhost:3001
+          NEXTAUTH_SECRET: e2e-nextauth-secret-please-change-in-real-env-32chars
+          NEXTAUTH_URL: http://localhost:3001
+        run: bun run e2e
+
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            frontend/playwright-report
+            frontend/test-results

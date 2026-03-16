@@ -1,0 +1,16 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: .devcontainer/Dockerfile.dev
+      args:
+        UID: "1000"
+        GID: "1000"
+    user: "dev"
+    command: sleep infinity
+    working_dir: /workspace
+    volumes:
+      - ..:/workspace:cached
+    ports:
+      - "127.0.0.1:8001:8000"
+

@@ -1,0 +1,85 @@
+name: CI
+
+permissions:
+  contents: read
+  security-events: write
+  id-token: write
+  actions: read
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  frontend-security:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: bun install --frozen-lockfile
+
+      - name: Generate text lockfile for Trivy (bun.lock)
+        working-directory: frontend
+        run: |
+          bun install --save-text-lockfile
+          ls -la
+
+      - name: Install Grype
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b /usr/local/bin
+          grype version
+
+      - name: Grype scan (print table + save SARIF)
+        run: |
+          set -euo pipefail
+
+          # Human-readable output for the Actions log
+          grype dir:. \
+            --only-fixed=false \
+            --fail-on high \
+            -o table
+
+          # SARIF for artifacts
+          grype dir:. \
+            --only-fixed=false \
+            --fail-on high \
+            -o sarif > grype-frontend.sarif
+
+      # Re-enable SARIF upload once public
+      # - name: Upload Grype SARIF
+      #   if: always() && hashFiles('grype-frontend.sarif') != ''
+      #   uses: github/codeql-action/upload-sarif@v4
+      #   with:
+      #     sarif_file: grype-frontend.sarif
+
+      - name: Generate frontend SBOM (SPDX)
+        uses: anchore/sbom-action@v0
+        with:
+          path: frontend
+          format: spdx-json
+          output-file: frontend-sbom.spdx.json
+
+      - name: Install cosign
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: sigstore/cosign-installer@v3
+
+      - name: Sign frontend SBOM (keyless)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          cosign sign-blob --yes \
+            --output-signature frontend-sbom.sig \
+            --output-certificate frontend-sbom.pem \
+            frontend-sbom.spdx.json
+
+      - name: Upload frontend SBOM artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-sbom
+          path: |
+            frontend-sbom.spdx.json
+            frontend-sbom.sig
+            frontend-sbom.pem
