@@ -39,7 +39,7 @@ class RefreshTokenModelTests(TestCase):
         """
         mock_settings.REFRESH_TOKEN_TTL_SECONDS = 3600
         mock_token_urlsafe.return_value = "refresh-token-value"
-        user = User.objects.create(google_id="gid-model-1", verified=True, warning_count=0)
+        user = User.objects.create(google_id="gid-model-1", verified=True)
 
         token, raw_token = RefreshToken.mint(user, user_agent="x" * 1200, ip="127.0.0.1")
 
@@ -56,7 +56,7 @@ class RefreshTokenModelTests(TestCase):
         WHEN is_valid is called
         THEN it returns False
         """
-        user = User.objects.create(google_id="gid-model-2", verified=True, warning_count=0)
+        user = User.objects.create(google_id="gid-model-2", verified=True)
         token, _raw_token = RefreshToken.mint(user)
         token.revoked_at = timezone.now()
         token.save(update_fields=["revoked_at"])
@@ -69,7 +69,7 @@ class RefreshTokenModelTests(TestCase):
         WHEN is_valid is called
         THEN it returns False
         """
-        user = User.objects.create(google_id="gid-model-3", verified=True, warning_count=0)
+        user = User.objects.create(google_id="gid-model-3", verified=True)
         token, _raw_token = RefreshToken.mint(user)
         token.expires_at = timezone.now() - timedelta(seconds=1)
         token.save(update_fields=["expires_at"])
@@ -82,7 +82,7 @@ class RefreshTokenModelTests(TestCase):
         WHEN is_valid is called
         THEN it returns True
         """
-        user = User.objects.create(google_id="gid-model-4", verified=True, warning_count=0)
+        user = User.objects.create(google_id="gid-model-4", verified=True)
         token, _raw_token = RefreshToken.mint(user)
 
         self.assertTrue(token.is_valid())
@@ -93,7 +93,7 @@ class RefreshTokenModelTests(TestCase):
         WHEN a child refresh token is minted with parent set
         THEN the child links to parent and shares the same family_id
         """
-        user = User.objects.create(google_id="gid-model-5", verified=True, warning_count=0)
+        user = User.objects.create(google_id="gid-model-5", verified=True)
         parent, _parent_raw = RefreshToken.mint(user)
 
         child, _child_raw = RefreshToken.mint(user, parent=parent)
@@ -107,7 +107,7 @@ class RefreshTokenModelTests(TestCase):
         WHEN revoke_family is called
         THEN only active tokens are revoked with the provided reason
         """
-        user = User.objects.create(google_id="gid-model-6", verified=True, warning_count=0)
+        user = User.objects.create(google_id="gid-model-6", verified=True)
         token_a, _ = RefreshToken.mint(user)
         token_b, _ = RefreshToken.mint(user, family_id=token_a.family_id)
         token_c, _ = RefreshToken.mint(user, family_id=token_a.family_id)
@@ -136,7 +136,7 @@ class RefreshTokenModelTests(TestCase):
         WHEN has_context_anomaly is called with a different user-agent
         THEN it returns True
         """
-        user = User.objects.create(google_id="gid-model-7", verified=True, warning_count=0)
+        user = User.objects.create(google_id="gid-model-7", verified=True)
         token, _ = RefreshToken.mint(user, user_agent="ua-original", ip="203.0.113.10")
 
         result = token.has_context_anomaly(request_user_agent="ua-other", request_ip="203.0.113.11")
@@ -149,7 +149,7 @@ class RefreshTokenModelTests(TestCase):
         WHEN has_context_anomaly is called with an IP in the same /24 network
         THEN it returns False
         """
-        user = User.objects.create(google_id="gid-model-8", verified=True, warning_count=0)
+        user = User.objects.create(google_id="gid-model-8", verified=True)
         token, _ = RefreshToken.mint(user, user_agent="ua-original", ip="203.0.113.10")
 
         result = token.has_context_anomaly(request_user_agent="ua-original", request_ip="203.0.113.77")

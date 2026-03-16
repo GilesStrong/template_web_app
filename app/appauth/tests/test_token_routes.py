@@ -50,7 +50,6 @@ class ExchangeRouteTests(TestCase):
 
         self.assertEqual(ctx.exception.status_code, 401)
 
-
     @patch(f"{_MODULE}.mint_access_token")
     @patch(f"{_MODULE}.RefreshToken")
     @patch(f"{_MODULE}.verify_google_token")
@@ -102,7 +101,7 @@ class RefreshRouteTests(TestCase):
         WHEN refresh is called
         THEN it raises HttpError 401 and does not mint new tokens
         """
-        user = User.objects.create(google_id="gid-refresh-invalid", verified=True, warning_count=0)
+        user = User.objects.create(google_id="gid-refresh-invalid", verified=True)
         rt, raw_token = RefreshToken.mint(user, user_agent="ua", ip="127.0.0.1")
         rt.revoked_at = __import__("django.utils.timezone").utils.timezone.now()
         rt.save(update_fields=["revoked_at"])
@@ -129,7 +128,7 @@ class RefreshRouteTests(TestCase):
         WHEN refresh is called
         THEN it revokes the old token, mints a new refresh token, and returns new access and refresh tokens
         """
-        user = User.objects.create(google_id="gid-refresh-ok", verified=True, warning_count=0)
+        user = User.objects.create(google_id="gid-refresh-ok", verified=True)
         old_rt, old_raw_token = RefreshToken.mint(user, user_agent="pytest", ip="127.0.0.1")
 
         request = SimpleNamespace(headers={"User-Agent": "pytest"}, META={"REMOTE_ADDR": "127.0.0.1"})
@@ -160,7 +159,7 @@ class RefreshRouteTests(TestCase):
         WHEN the old token is used again
         THEN the token family is revoked and refresh returns 401
         """
-        user = User.objects.create(google_id="gid-refresh-reuse", verified=True, warning_count=0)
+        user = User.objects.create(google_id="gid-refresh-reuse", verified=True)
         old_rt, old_raw_token = RefreshToken.mint(user, user_agent="pytest", ip="127.0.0.1")
 
         request = SimpleNamespace(headers={"User-Agent": "pytest"}, META={"REMOTE_ADDR": "127.0.0.1"})
@@ -195,7 +194,7 @@ class RefreshRouteTests(TestCase):
         WHEN refresh is called
         THEN it rejects with 401 and revokes the active token family with context_mismatch reason
         """
-        user = User.objects.create(google_id="gid-refresh-context", verified=True, warning_count=0)
+        user = User.objects.create(google_id="gid-refresh-context", verified=True)
         old_rt, old_raw_token = RefreshToken.mint(user, user_agent="ua-original", ip="203.0.113.10")
 
         request = SimpleNamespace(headers={"User-Agent": "ua-other"}, META={"REMOTE_ADDR": "203.0.113.10"})
@@ -222,7 +221,7 @@ class RefreshRouteTests(TestCase):
         WHEN refresh is called behind the same trusted proxy with a forwarded client IP
         THEN refresh succeeds and the rotated token stores the resolved client IP
         """
-        user = User.objects.create(google_id="gid-refresh-legacy-proxy", verified=True, warning_count=0)
+        user = User.objects.create(google_id="gid-refresh-legacy-proxy", verified=True)
         old_rt, old_raw_token = RefreshToken.mint(user, user_agent="pytest", ip="10.0.0.3")
 
         request = SimpleNamespace(

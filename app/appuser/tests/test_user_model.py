@@ -27,12 +27,11 @@ class UserModelTests(TestCase):
         """
         GIVEN a new user created with only google_id
         WHEN the user is persisted
-        THEN verified defaults to False and warning_count defaults to 0
+        THEN verified defaults to False
         """
         user = User.objects.create(google_id="gid-defaults")
 
         self.assertFalse(user.verified)
-        self.assertEqual(user.warning_count, 0)
         self.assertIsNotNone(user.id)
 
     def test_google_id_must_be_unique(self):
@@ -45,16 +44,3 @@ class UserModelTests(TestCase):
 
         with self.assertRaises(IntegrityError):
             User.objects.create(google_id="gid-unique")
-
-    def test_warning_count_can_be_updated(self):
-        """
-        GIVEN a persisted user record
-        WHEN warning_count is incremented and saved
-        THEN the updated warning_count value is persisted
-        """
-        user = User.objects.create(google_id="gid-warning")
-        user.warning_count += 2
-        user.save(update_fields=["warning_count"])
-        user.refresh_from_db()
-
-        self.assertEqual(user.warning_count, 2)

@@ -38,11 +38,11 @@ class AccountRoutesTests(TestCase):
 
     def test_export_account_data_returns_profile_data(self):
         """
-        GIVEN an authenticated user 
+        GIVEN an authenticated user
         WHEN export_account_data is called
         THEN the payload includes user profile data
         """
-        user = User.objects.create(google_id="gid-export", verified=True, warning_count=1)
+        user = User.objects.create(google_id="gid-export", verified=True)
         _token, _raw_token = RefreshToken.mint(user, user_agent="pytest", ip="127.0.0.1")
 
         with patch(f'{_MODULE}.check_auth_rate_limit') as mock_limit:
@@ -58,7 +58,7 @@ class AccountRoutesTests(TestCase):
         WHEN export_account_data is called
         THEN it raises HttpError 429
         """
-        user = User.objects.create(google_id='gid-export-limited', verified=True, warning_count=0)
+        user = User.objects.create(google_id='gid-export-limited', verified=True)
 
         with patch(f'{_MODULE}.check_auth_rate_limit') as mock_limit:
             mock_limit.return_value = SimpleNamespace(allowed=False, retry_after_seconds=3600)
@@ -74,7 +74,7 @@ class AccountRoutesTests(TestCase):
         WHEN export_account_data is called
         THEN it checks rate limiting with a 1-per-hour configuration
         """
-        user = User.objects.create(google_id='gid-export-window', verified=True, warning_count=0)
+        user = User.objects.create(google_id='gid-export-window', verified=True)
         request = SimpleNamespace(auth=user, headers={}, META={})
 
         with patch(f'{_MODULE}.check_auth_rate_limit') as mock_limit:
