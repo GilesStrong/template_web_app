@@ -74,9 +74,7 @@ export async function proxy(request: NextRequest) {
     }
 
     const isAuthPage = pathname === "/login";
-    const isProtectedRoute =
-        pathname.startsWith("/dashboard") ||
-        pathname.startsWith("/decks");
+    const isProtectedRoute = pathname.startsWith("/dashboard");
 
     if (isProtectedRoute || isAuthPage) {
         const token = await getToken({

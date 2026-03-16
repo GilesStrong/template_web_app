@@ -35,7 +35,7 @@ class RangeConditionTests(TestCase):
         THEN it raises a ValueError for invalid bounds
         """
         with self.assertRaises(ValueError):
-            RangeCondition(key="cmc", gte=6, lte=2)
+            RangeCondition(key="score", gte=6, lte=2)
 
     def test_to_qdrant_maps_bounds_and_key(self):
         """
@@ -43,11 +43,11 @@ class RangeConditionTests(TestCase):
         WHEN to_qdrant is called
         THEN it returns a FieldCondition with matching key and range bounds
         """
-        cond = RangeCondition(key="cmc", gte=1, lte=4)
+        cond = RangeCondition(key="score", gte=1, lte=4)
 
         result = cond.to_qdrant()
 
-        self.assertEqual(result.key, "cmc")
+        self.assertEqual(result.key, "score")
         self.assertEqual(result.range.gte, 1)
         self.assertEqual(result.range.lte, 4)
 
@@ -62,7 +62,7 @@ class MatchConditionTests(TestCase):
         THEN it raises a ValueError
         """
         with self.assertRaises(ValueError):
-            MatchAnyCondition(key="colors", any=[])
+            MatchAnyCondition(key="labels", any=[])
 
     def test_match_value_to_qdrant_contains_value(self):
         """
@@ -70,12 +70,12 @@ class MatchConditionTests(TestCase):
         WHEN to_qdrant is called
         THEN it maps key and value into a Qdrant FieldCondition
         """
-        cond = MatchValueCondition(key="rarity", value="common")
+        cond = MatchValueCondition(key="category", value="standard")
 
         result = cond.to_qdrant()
 
-        self.assertEqual(result.key, "rarity")
-        self.assertEqual(result.match.value, "common")
+        self.assertEqual(result.key, "category")
+        self.assertEqual(result.match.value, "standard")
 
 
 class FilterAndQueryTests(TestCase):
@@ -89,9 +89,9 @@ class FilterAndQueryTests(TestCase):
         """
         dsl_filter = Filter(
             min_should_count=1,
-            should=[MatchAnyCondition(key="colors", any=["R", "U"])],
-            must=[RangeCondition(key="converted_mana_cost", gte=1, lte=3)],
-            must_not=[MatchValueCondition(key="rarity", value="mythic")],
+            should=[MatchAnyCondition(key="labels", any=["alpha", "beta"])],
+            must=[RangeCondition(key="priority", gte=1, lte=3)],
+            must_not=[MatchValueCondition(key="category", value="archived")],
         )
 
         q_filter = dsl_filter.to_qdrant()
@@ -108,7 +108,7 @@ class FilterAndQueryTests(TestCase):
         THEN it raises a ValueError because at least one input is required
         """
         with self.assertRaises(ValueError):
-            Query(collection_name="cards", query_string=None, filter=None, limit=10)
+            Query(collection_name="items", query_string=None, filter=None, limit=10)
 
     def test_query_accepts_filter_only(self):
         """
@@ -117,12 +117,12 @@ class FilterAndQueryTests(TestCase):
         THEN it succeeds as a valid filter-only query
         """
         query = Query(
-            collection_name="cards",
+            collection_name="items",
             query_string=None,
-            filter=Filter(must=[MatchValueCondition(key="rarity", value="common")]),
+            filter=Filter(must=[MatchValueCondition(key="category", value="standard")]),
             limit=5,
         )
 
-        self.assertEqual(query.collection_name, "cards")
+        self.assertEqual(query.collection_name, "items")
         self.assertIsNone(query.query_string)
         self.assertEqual(query.limit, 5)

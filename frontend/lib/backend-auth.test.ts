@@ -219,12 +219,12 @@ describe("backend-auth", () => {
 
         const response = await backendFetch(
             { user: { email: "user@test.dev" } } as never,
-            "/api/app/cards/deck/",
+            "/api/app/resource/items/",
         );
 
         expect(response.status).toBe(200);
         expect(fetchMock).toHaveBeenCalledWith(
-            "/backend-api/cards/deck/",
+            "/backend-api/resource/items/",
             expect.objectContaining({
                 method: "GET",
                 credentials: "same-origin",

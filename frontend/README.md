@@ -1,92 +1,51 @@
-# Deep MTG Frontend
+# Template Web Frontend
 
-## Development Setup
+## Overview
 
-### Prerequisites
-- Docker and Docker Compose installed
-- Google OAuth credentials (Client ID and Secret)
+This frontend is a Next.js app intended to be reused as a template alongside the Django backend.
 
-### Environment Variables
+## Prerequisites
 
-1. Copy the example environment file:
-```bash
-cp frontend/.env.example frontend/.env
-```
+- Bun
+- Google OAuth client credentials
 
-2. Edit `frontend/.env` and add your credentials:
-- `GOOGLE_CLIENT_ID`: Your Google OAuth Client ID
-- `GOOGLE_CLIENT_SECRET`: Your Google OAuth Client Secret
-- `GOOGLE_ENFORCE_ALLOWED_EMAILS`: `true` to enforce allowlist, `false` to allow all Google users
-- `GOOGLE_ALLOWED_EMAILS`: Comma-separated list of emails allowed to sign in via Google
-- `NEXTAUTH_SECRET`: A random secret string (at least 32 characters)
-- `NEXTAUTH_URL`: Should be `http://localhost:3000` for local dev
-- `BACKEND_INTERNAL_URL`: Internal backend base URL for server-side token exchange (default: `http://web:8000`)
-- `NEXT_PUBLIC_SUPPORT_EMAIL`: Public support email shown on the support page (optional)
+## Environment variables
 
-### Running the Application
+Create `frontend/.env` (or set vars in your shell) with:
 
-1. Start all services (backend, frontend, and proxy):
-```bash
-docker compose up
-```
+- `GOOGLE_CLIENT_ID`
+- `GOOGLE_CLIENT_SECRET`
+- `GOOGLE_ENFORCE_ALLOWED_EMAILS`
+- `GOOGLE_ALLOWED_EMAILS`
+- `NEXTAUTH_SECRET`
+- `NEXTAUTH_URL` (for local dev: `http://localhost:3001`)
+- `BACKEND_INTERNAL_URL` (for server-side token exchange)
 
-2. Open your browser and navigate to:
-```
-http://localhost:3000
-```
+## Run locally
 
-The reverse proxy (Caddy) handles routing:
-- `/` → Next.js frontend
-- `/api/auth/*` → NextAuth (Next.js)
-- `/api/*` → Django backend
-
-### Production Build
-
-To build for production:
 ```bash
 cd frontend
-npm run build
-npm run start
+bun install --frozen-lockfile
+bun run dev
 ```
 
-### Tech Stack
+App URL: `http://localhost:3001`
 
-- **Next.js 16** with App Router
-- **React 18**
-- **TypeScript** (strict mode)
-- **Tailwind CSS** for styling
-- **shadcn/ui** for UI components
-- **NextAuth** for Google OAuth authentication
-- **Caddy** as reverse proxy in development
+## Build for production
 
-### Project Structure
-
-```
-frontend/
-├── app/
-│   ├── api/              # API route handlers (NextAuth)
-│   ├── dashboard/        # Dashboard page (protected)
-│   ├── decks/           # Deck view pages (protected)
-│   ├── login/           # Login page
-│   ├── layout.tsx       # Root layout
-│   └── globals.css      # Global styles
-├── components/
-│   └── ui/              # shadcn/ui components
-├── lib/
-│   ├── auth.ts          # NextAuth configuration
-│   └── utils.ts         # Utility functions
-├── proxy.ts             # Route protection proxy
-└── package.json
+```bash
+cd frontend
+bun run build
+bun run start
 ```
 
-### Features
+## Test
 
-1. **Authentication**: Google OAuth login with NextAuth
-4. **Protected Routes**: Automatic redirect to login for unauthenticated users
+```bash
+cd frontend
+bun run test --run
+```
 
-### Development Notes
+## E2E
 
-- Frontend runs on internal port 3001
-- Proxy exposes port 3000 to host
-- Hot reload is enabled via volume mounts
-- All API calls are same-origin to avoid CORS issues
+See `frontend/TESTING_E2E.md` for Playwright setup and how to add tests.

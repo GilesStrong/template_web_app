@@ -41,8 +41,8 @@ class MintAccessTokenTests(TestCase):
         """
         frozen_now = datetime(2026, 2, 27, 12, 0, 0, tzinfo=timezone.utc)
         mock_datetime.now.return_value = frozen_now
-        mock_settings.JWT_ISSUER = "deep-mtg"
-        mock_settings.JWT_AUDIENCE = "deep-mtg-api"
+        mock_settings.JWT_ISSUER = "myapp"
+        mock_settings.JWT_AUDIENCE = "myapp-api"
         mock_settings.JWT_SIGNING_KEY = "test-signing-key"
         mock_settings.ACCESS_TOKEN_TTL_SECONDS = 900
         mock_encode.return_value = "encoded-token"
@@ -50,8 +50,8 @@ class MintAccessTokenTests(TestCase):
         token = mint_access_token(user_id=_USER_ID)
 
         expected_payload = {
-            "iss": "deep-mtg",
-            "aud": "deep-mtg-api",
+            "iss": "myapp",
+            "aud": "myapp-api",
             "sub": str(_USER_ID),
             "iat": int(frozen_now.timestamp()),
             "exp": int((frozen_now.timestamp()) + 900),
@@ -73,8 +73,8 @@ class DecodeAccessTokenTests(TestCase):
         THEN jwt.decode is called with audience, issuer, HS256, and required claim options
         """
         mock_settings.JWT_SIGNING_KEY = "test-signing-key"
-        mock_settings.JWT_AUDIENCE = "deep-mtg-api"
-        mock_settings.JWT_ISSUER = "deep-mtg"
+        mock_settings.JWT_AUDIENCE = "myapp-api"
+        mock_settings.JWT_ISSUER = "myapp"
         mock_decode.return_value = {"sub": str(_USER_ID), "typ": "access"}
 
         payload = decode_access_token("token-value")
@@ -83,8 +83,8 @@ class DecodeAccessTokenTests(TestCase):
             "token-value",
             "test-signing-key",
             algorithms=["HS256"],
-            audience="deep-mtg-api",
-            issuer="deep-mtg",
+            audience="myapp-api",
+            issuer="myapp",
             options={"require": ["exp", "iat", "sub", "aud", "iss"]},
         )
         self.assertEqual(payload["typ"], "access")

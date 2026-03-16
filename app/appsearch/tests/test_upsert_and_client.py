@@ -42,11 +42,11 @@ class UpsertServiceTests(TestCase):
         mock_settings.HNSW_EF_CONSTRUCT = 128
         mock_client.get_collections.return_value = SimpleNamespace(collections=[SimpleNamespace(name="other")])
 
-        create_collection_if_not_exists("cards")
+        create_collection_if_not_exists("items")
 
         mock_client.create_collection.assert_called_once()
         kwargs = mock_client.create_collection.call_args.kwargs
-        self.assertEqual(kwargs["collection_name"], "cards")
+        self.assertEqual(kwargs["collection_name"], "items")
         self.assertIn("dense", kwargs["vectors_config"])
 
     @patch(f"{_UPSERT_MODULE}.QDRANT_CLIENT")
@@ -56,9 +56,9 @@ class UpsertServiceTests(TestCase):
         WHEN create_collection_if_not_exists is called
         THEN it does not call create_collection
         """
-        mock_client.get_collections.return_value = SimpleNamespace(collections=[SimpleNamespace(name="cards")])
+        mock_client.get_collections.return_value = SimpleNamespace(collections=[SimpleNamespace(name="items")])
 
-        create_collection_if_not_exists("cards")
+        create_collection_if_not_exists("items")
 
         mock_client.create_collection.assert_not_called()
 
@@ -71,9 +71,9 @@ class UpsertServiceTests(TestCase):
         """
         points = [SimpleNamespace(id="p1"), SimpleNamespace(id="p2")]
 
-        upsert_documents("cards", points)
+        upsert_documents("items", points)
 
-        mock_client.upsert.assert_called_once_with(collection_name="cards", points=points)
+        mock_client.upsert.assert_called_once_with(collection_name="items", points=points)
 
 
 class QdrantClientModuleTests(TestCase):

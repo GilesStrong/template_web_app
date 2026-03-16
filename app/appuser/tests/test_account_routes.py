@@ -36,7 +36,7 @@ _MODULE = 'appuser.routes.account'
 class AccountRoutesTests(TestCase):
     """Tests for account data export and deletion routes."""
 
-    def test_export_account_data_returns_profile_decks_and_tokens(self):
+    def test_export_account_data_returns_profile_data(self):
         """
         GIVEN an authenticated user 
         WHEN export_account_data is called
@@ -90,19 +90,17 @@ class AccountRoutesTests(TestCase):
 
     def test_delete_account_removes_user_and_related_records(self):
         """
-        GIVEN an authenticated user with decks and refresh tokens
+        GIVEN an authenticated user with refresh tokens
         WHEN delete_account is called with a valid confirmation token
         THEN the user and related records are removed
         """
         user = User.objects.create(google_id="gid-delete", verified=True)
-        deck = Deck.objects.create(name="Delete Deck", user=user)
         _token, _raw_token = RefreshToken.mint(user, user_agent="pytest", ip="127.0.0.1")
         confirmation = request_delete_account(SimpleNamespace(auth=user))
 
         delete_account(SimpleNamespace(auth=user), SimpleNamespace(confirmation_token=confirmation.confirmation_token))
 
         self.assertFalse(User.objects.filter(id=user.id).exists())
-        self.assertFalse(Deck.objects.filter(id=deck.id).exists())
         self.assertFalse(RefreshToken.objects.filter(user_id=user.id).exists())
 
     def test_delete_account_rejects_invalid_confirmation_token(self):

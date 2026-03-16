@@ -103,10 +103,10 @@ describe("authOptions callbacks", () => {
 
         expect(
             await authOptions.callbacks?.redirect?.({
-                url: "https://app.test/decks",
+                url: "https://app.test/dashboard",
                 baseUrl: "https://app.test",
             }),
-        ).toBe("https://app.test/decks");
+        ).toBe("https://app.test/dashboard");
 
         expect(
             await authOptions.callbacks?.redirect?.({

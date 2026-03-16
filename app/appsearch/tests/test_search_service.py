@@ -41,7 +41,7 @@ class RunQueryTests(TestCase):
         expected_points = [SimpleNamespace(id="1"), SimpleNamespace(id="2")]
         mock_client.query_points.return_value = SimpleNamespace(points=expected_points)
 
-        result = run_query("cards", [0.1, 0.2], None, limit=7)
+        result = run_query("items", [0.1, 0.2], None, limit=7)
 
         mock_client.query_points.assert_called_once()
         self.assertEqual(result, expected_points)
@@ -60,13 +60,13 @@ class RunQueryFromDslTests(TestCase):
         """
         mock_dense_embed.return_value = [0.3, 0.4, 0.5]
         mock_run_query.return_value = [SimpleNamespace(id="x")]
-        dsl = Query(collection_name="cards", query_string="cheap removal", filter=None, limit=5)
+        dsl = Query(collection_name="items", query_string="example query", filter=None, limit=5)
 
         result = run_query_from_dsl(dsl)
 
-        mock_dense_embed.assert_called_once_with("cheap removal")
+        mock_dense_embed.assert_called_once_with("example query")
         mock_run_query.assert_called_once_with(
-            collection_name="cards",
+            collection_name="items",
             query_vector=[0.3, 0.4, 0.5],
             query_filter=None,
             limit=5,
@@ -81,8 +81,8 @@ class RunQueryFromDslTests(TestCase):
         THEN it augments must and must_not conditions with HasIdCondition filters
         """
         mock_run_query.return_value = []
-        dsl_filter = Filter(must=[MatchValueCondition(key="rarity", value="common")])
-        dsl = Query(collection_name="cards", query_string=None, filter=dsl_filter, limit=10)
+        dsl_filter = Filter(must=[MatchValueCondition(key="category", value="standard")])
+        dsl = Query(collection_name="items", query_string=None, filter=dsl_filter, limit=10)
 
         run_query_from_dsl(dsl_query=dsl, include_ids=["a", "b"], exclude_ids=["c"])
 
@@ -99,7 +99,7 @@ class RunQueryFromDslTests(TestCase):
         THEN it creates a new Qdrant filter containing ID constraints
         """
         mock_run_query.return_value = []
-        dsl = Query(collection_name="cards", query_string=None, filter=Filter(), limit=3)
+        dsl = Query(collection_name="items", query_string=None, filter=Filter(), limit=3)
 
         run_query_from_dsl(dsl_query=dsl, include_ids=["x"], exclude_ids=["y"])
 

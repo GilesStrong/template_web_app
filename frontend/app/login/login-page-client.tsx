@@ -38,11 +38,11 @@ function LoginPageContent() {
         <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100">
             <Card className="w-full max-w-md">
                 <CardHeader className="space-y-1">
-                    <CardTitle className="text-3xl font-bold text-center">Deep MTG</CardTitle>
+                    <CardTitle className="text-3xl font-bold text-center">myapp</CardTitle>
                     <CardDescription className="text-center">
                         {isAccessDenied
                             ? "Access denied"
-                            : "AI-powered Magic: The Gathering deck builder"}
+                            : "Template web application"}
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">

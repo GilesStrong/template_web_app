@@ -26,7 +26,7 @@ const inter = Inter({ subsets: ["latin"] });
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "mayapp",
+  title: "myapp",
   description: "myapp -- a template web application built with Django and Next.js",
   icons: {
     icon: [{ url: favicon.src, type: "image/png" }],

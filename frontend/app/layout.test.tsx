@@ -60,8 +60,8 @@ describe("RootLayout", () => {
     });
 
     it("exports expected metadata", () => {
-        expect(metadata.title).toBe("Deep MTG");
-        expect(metadata.description).toBe("AI-powered Magic: The Gathering deck builder");
+        expect(metadata.title).toBe("myapp");
+        expect(metadata.description).toBe("myapp -- a template web application built with Django and Next.js");
         expect(metadata.icons).toEqual({
             icon: [{ url: "/favicon.png", type: "image/png" }],
             shortcut: [{ url: "/favicon.png", type: "image/png" }],
