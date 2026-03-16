@@ -20,7 +20,6 @@ services:
 
   proxy:
     image: caddy:2-alpine
-    container_name: caddy_proxy
     ports:
       - "${PORT}:3000"
     volumes:

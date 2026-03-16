@@ -24,7 +24,6 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
-import os
 import sys
 from pathlib import Path
 
@@ -229,10 +228,10 @@ CELERY_BEAT_SCHEDULE = {
     },
 }
 
-if not TESTING:
+if not TESTING and APP_SETTINGS.LOGFIRE_TOKEN and APP_SETTINGS.LOGFIRE_ENVIRONMENT:
     logfire.configure(environment=APP_SETTINGS.LOGFIRE_ENVIRONMENT, token=APP_SETTINGS.LOGFIRE_TOKEN)
     logfire.instrument_pydantic_ai()
 
-# Set API keys as environment variables for any libraries that expect them there, e.g. 
+# Set API keys as environment variables for any libraries that expect them there, e.g.
 # os.environ["GOOGLE_API_KEY"] = APP_SETTINGS.GOOGLE_API_KEY
 # os.environ["DEEPSEEK_API_KEY"] = APP_SETTINGS.DEEPSEEK_API_KEY

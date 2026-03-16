@@ -22,8 +22,7 @@ x-app-common: &app-common
 services:
   db:
     image: postgres:16
-    container_name: postgres_db
-    restart: always
+    restart: unless-stopped
     env_file:
       - .env
     ports:
@@ -49,7 +48,6 @@ services:
 
   redis:
     image: redis:7
-    container_name: redis
     restart: always
     networks:
       - myapp_network
@@ -66,7 +64,6 @@ services:
 
   web:
     <<: *app-common
-    container_name: django_app
     command: python manage.py runserver 0.0.0.0:8000
     ports:
       - "127.0.0.1:8001:8000"
@@ -76,7 +73,6 @@ services:
 
   celery_worker:
     <<: *app-common
-    container_name: celery_worker
     command: celery -A app worker -Q default --loglevel=info --concurrency=8 -n worker_default@%h
     depends_on:
       db:
@@ -86,7 +82,6 @@ services:
 
   celery_llm_worker:
     <<: *app-common
-    container_name: celery_llm_worker
     command: celery -A app worker -Q llm --loglevel=info --concurrency=1 --pool=prefork --max-tasks-per-child=50 -n worker_llm@%h
     depends_on:
       db:
@@ -97,7 +92,6 @@ services:
 
   celery_beat:
     <<: *app-common
-    container_name: celery_beat
     command: celery -A app beat --loglevel=info
     restart: always
 
