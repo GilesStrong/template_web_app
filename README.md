@@ -38,7 +38,7 @@ cp frontend/.env.example frontend/.env
 Then edit values as needed:
 
 - In `.env`: backend/auth/API keys and Django/JWT settings
-- In `frontend/.env`: Google OAuth + NextAuth settings (`NEXTAUTH_URL` should be `http://localhost:3000` for local)
+- In `frontend/.env`: Google OAuth + NextAuth settings (`NEXTAUTH_URL` should be `http://localhost:3002` for local)
 
 ### 2.1) Configure `AUTH_RATE_LIMIT_TRUSTED_PROXY_CIDRS`
 
@@ -104,8 +104,8 @@ docker compose exec web python app/manage.py migrate
 
 ### 5) Open the app
 
-- App URL: http://localhost:3000
-- Backend health: http://localhost:3000/healthz
+- App URL: http://localhost:3002
+- Backend health: http://localhost:3002/healthz
 
 ### 6) Useful dev commands
 

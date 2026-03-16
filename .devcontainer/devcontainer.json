@@ -16,14 +16,14 @@
     "frontend"
   ],
   "forwardPorts": [
-    3000,
-    8001
+    3002,
+    8002
   ],
   "portsAttributes": {
-    "3000": {
+    "3002": {
       "label": "Frontend UI (Caddy proxy)"
     },
-    "8001": {
+    "8002": {
       "label": "Django (direct)"
     }
   },
